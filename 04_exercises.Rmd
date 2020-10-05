@@ -399,6 +399,13 @@ These exercises use the datasets `MplsStops` and `MplsDemo` from the `carData` l
   14. Use the `MplsStops` dataset to find out how many stops there were for each neighborhood and the proportion of stops that were for a suspicious vehicle or person. Sort the results from most to least number of stops. Save this as a dataset called `mpls_suspicious` and display the table.  
 
 ```{r}
+mpls_suspicious<-
+  MplsStops%>%
+  group_by(neighborhood, problem)%>%
+  summarise(number = n())%>%
+  mutate(prop_sus = number/sum(number))%>%
+  filter(problem == "suspicious")%>%
+  arrange(desc(prop_sus))
 
 ```
   
@@ -406,14 +413,50 @@ These exercises use the datasets `MplsStops` and `MplsDemo` from the `carData` l
   
   16. Save the folder from moodle called Minneapolis_Neighborhoods into your project/repository folder for this assignment. Make sure the folder is called Minneapolis_Neighborhoods. Use the code below to read in the data and make sure to **delete the `eval=FALSE`**. Although it looks like it only links to the .sph file, you need the entire folder of files to create the `mpls_nbhd` data set. These data contain information about the geometries of the Minneapolis neighborhoods. Using the `mpls_nbhd` dataset as the base file, join the `mpls_suspicious` and `MplsDemo` datasets to it by neighborhood (careful, they are named different things in the different files). Call this new dataset `mpls_all`.
 
-```{r, eval=FALSE}
+```{r}
 mpls_nbhd <- st_read("Minneapolis_Neighborhoods/Minneapolis_Neighborhoods.shp", quiet = TRUE)
+mpls_all<-
+  mpls_nbhd%>%
+  right_join(MplsDemo,
+             by = c("BDNAME" = "neighborhood"))%>%
+right_join(mpls_suspicious,
+             by = c("BDNAME" = "neighborhood"))
+  
 ```
 
   17. Use `leaflet` to create a map from the `mpls_all` data  that colors the neighborhoods by `prop_suspicious`. Display the neighborhood name as you scroll over it. Describe what you observe in the map.
   
+```{r}
+colors_mpls<-colorNumeric("YlOrBr",
+                          domain = mpls_all$prop_sus)
+leaflet(mpls_all)%>%
+  addTiles()%>%
+  addPolygons(fillColor = ~colors_mpls(prop_sus),
+              fillOpacity = .7,
+              label = ~paste(str_to_title(BDNAME),
+                             ":",
+                             round(prop_sus,2),
+                             .sep=""),
+              highlight = highlightOptions(color="black",
+                                           fillOpacity = 1,
+                                           bringToFront = FALSE))
+```
+
   18. Use `leaflet` to create a map of your own choosing. Come up with a question you want to try to answer and use the map to help answer that question. Describe what your map shows. 
   
+```{r}
+starbucks_mn<-
+  Starbucks%>%
+  filter(`State/Province` == "MN")
+
+leaflet(data = starbucks_mn) %>% 
+  addTiles()%>%
+  addCircles(lng = ~Longitude, 
+             lat = ~Latitude,
+             label = ~`Store Name`,
+             weight = 3, 
+             opacity = 1) 
+```
   
 ## GitHub link
 
