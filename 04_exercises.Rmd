@@ -12,7 +12,7 @@ output:
 
 
 ```{r setup, include=FALSE}
-#knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
 ```
 
 ```{r libraries}
@@ -110,7 +110,8 @@ ggmap(world) +
              aes(x = Longitude, y = Latitude, color = `Ownership Type` ), 
              alpha = .3, 
              size = .1) +
-  theme_map()
+  theme_map()+
+  labs(title = "Global Starbucks Locations by Ownership Type")
 ```
 
 Company Owned and Licensed locations are the most common worldwide. There are next to no Joint Venture locations in North America, a few of them in eastern Europe, and exclusively Joint Venture in Japan. 
@@ -127,7 +128,8 @@ twincities <- get_stamenmap(
 ggmap(twincities) + 
   geom_point(data = Starbucks, 
              aes(x = Longitude, y = Latitude))+
-  theme_map()
+  theme_map()+
+  labs(title = "Starbucks in Twin Cities Area")
 ```
 
   3. In the Twin Cities plot, play with the zoom number. What does it do?  (just describe what it does - don't actually include more than one map).  
@@ -146,7 +148,8 @@ twincities <- get_stamenmap(
 ggmap(twincities) + 
   geom_point(data = Starbucks, 
              aes(x = Longitude, y = Latitude))+
-  theme_map()
+  theme_map()+
+  labs(title = "Starbucks in Twin Cities Area")
 ```
 
   5. Add a point to the map that indicates Macalester College and label it appropriately. There are many ways you can do think, but I think it's easiest with the `annotate()` function (see `ggplot2` cheatsheet).
@@ -162,7 +165,8 @@ ggmap(twincities) +
   geom_point(data = Starbucks, 
              aes(x = Longitude, y = Latitude))+
   annotate(geom = "text", x = -93.16, y = 44.94, label = "Mac", size = 3)
-  theme_map()
+  theme_map()+
+  labs(title = "Starbucks in Twin Cities Area (with label for Macalester")
 ```
 
 ### Choropleth maps with Starbucks data (`geom_map()`)
@@ -182,9 +186,6 @@ starbucks_with_2018_pop_est <-
   mutate(starbucks_per_10000 = (n/est_pop_2018)*10000)
 ```
 
-  6. **`dplyr` review**: Look through the code above and describe what each line of code does.
-  
-  
 
   7. Create a choropleth map that shows the number of Starbucks per 10,000 people on a map of the US. Use a new fill color, add points for all Starbucks in the US (except Hawaii and Alaska), add an informative title for the plot, and include a caption that says who created the plot (you!). Make a conclusion about what you observe.
   
@@ -212,6 +213,8 @@ starbucks_with_2018_pop_est %>%
   theme_map()+
   labs(title = "Number of Starbucks locations per 10,000 people by state", subtitle = "map by Kelsey Stender")
 ```
+
+There is a much higher number of Starbucks locations per 10,000 people on the West Coast than anywhere else in the U.S. The East Coast has many locations, as seen by the abundance of yellow dots on the map, but as a proportion of population there are not that many Starbucks as is stereotyped. 
 
 ### A few of your favorite things (`leaflet`)
 
@@ -241,8 +244,13 @@ leaflet(data = favorite_places) %>%
              label = ~place,
              weight = 10, 
              opacity = 1, 
-             color = ~favorite_colors(top_three)) 
-```
+             color = ~favorite_colors(top_three))%>%
+  addLegend("bottomright",
+            pal = favorite_colors,
+            values = ~top_three,
+            title = "Is it a favorite place?")
+``` 
+
   
   * Connect all your locations together with a line in a meaningful way (you may need to order them differently in the original data).  
   
@@ -259,7 +267,6 @@ leaflet(data = favorite_places) %>%
                lat = ~lat, 
                color = col2hex("darkred"))
 ```
-  
   * If there are other variables you want to add that could enhance your plot, do that now.  
   
 ## Revisiting old datasets
@@ -327,7 +334,7 @@ ggmap(dcarea)+
   theme_map()
 ```
   
-The departures in the more tourist-y areas of DC have a much higher percentage of casual departures than other areas of DC.   
+The departures in the more tourist-y areas of DC have a much higher percentage of casual departures than other areas of DC. Commuters in the area using the bikes to get to work in DC take a trip from a location close to where they live or close to where they work- they most likely will try to avoid the tourist-heavy areas.  
 
 ### COVID-19 data
 
@@ -368,6 +375,9 @@ covid19%>%
   theme_map()+
   labs(title = "Most Recent Cumulative COVID-19 Cases per 10,000 People")
 ```
+  
+  This graph is a much more accurate representation of how COVID is impacting each individual state. We can see that South Dakota has proportionally more cases than California, even though California has a much higher number of cases. 
+  
   13. **CHALLENGE** Choose 4 dates spread over the time period of the data and create the same map as in exercise 12 for each of the dates. Display the four graphs together using faceting. What do you notice?
   
 ```{r}
@@ -391,7 +401,9 @@ covid19%>%
   facet_wrap(vars(date))+
   labs(title = "Cumulative COVID-19 Cases per 10,000 People Over Time")
 ```
-  
+
+In this graph, I can see that everywhere has been progressively accumulating more and more cases. States that had been untouched at the start of the pandemic are now being impacted greatly by COVID, and the progression is tracked in these graphs. 
+
 ## Minneapolis police stops
 
 These exercises use the datasets `MplsStops` and `MplsDemo` from the `carData` library. Search for them in Help to find out more information.
@@ -406,10 +418,20 @@ mpls_suspicious<-
   mutate(prop_sus = number/sum(number))%>%
   filter(problem == "suspicious")%>%
   arrange(desc(prop_sus))
-
+mpls_suspicious
 ```
   
   15. Use a `leaflet` map and the `MplsStops` dataset to display each of the stops on a map as a small point. Color the points differently depending on whether they were for suspicious vehicle/person or a traffic stop (the `problem` variable). HINTS: use `addCircleMarkers`, set `stroke = FAlSE`, use `colorFactor()` to create a palette.  
+
+```{r}
+pal_stops<-colorFactor(palette = c("blue", "goldenrod"),
+                       levels = c("suspicious", "traffic"))
+leaflet(MplsStops)%>%
+  addTiles()%>%
+  addCircleMarkers(stroke = FALSE,
+                   color = ~pal_stops(problem),
+                   radius = 2)
+```
   
   16. Save the folder from moodle called Minneapolis_Neighborhoods into your project/repository folder for this assignment. Make sure the folder is called Minneapolis_Neighborhoods. Use the code below to read in the data and make sure to **delete the `eval=FALSE`**. Although it looks like it only links to the .sph file, you need the entire folder of files to create the `mpls_nbhd` data set. These data contain information about the geometries of the Minneapolis neighborhoods. Using the `mpls_nbhd` dataset as the base file, join the `mpls_suspicious` and `MplsDemo` datasets to it by neighborhood (careful, they are named different things in the different files). Call this new dataset `mpls_all`.
 
@@ -442,6 +464,8 @@ leaflet(mpls_all)%>%
                                            bringToFront = FALSE))
 ```
 
+There is a higher proportion of stops for a suspicious reason in Southeast Minneapolis than in any other part of Minneapolis. Northeast and Southwest Minneapolis have the neighborhoods with the fewest suspicious stops. 
+
   18. Use `leaflet` to create a map of your own choosing. Come up with a question you want to try to answer and use the map to help answer that question. Describe what your map shows. 
   
 ```{r}
@@ -455,8 +479,20 @@ leaflet(data = starbucks_mn) %>%
              lat = ~Latitude,
              label = ~`Store Name`,
              weight = 3, 
-             opacity = 1) 
+             opacity = 1)%>%
+  addPolygons(data = mpls_all,
+              fillColor = ~colors_mpls(prop_sus),
+              fillOpacity = .7,
+              label = ~paste(str_to_title(BDNAME),
+                             ":",
+                             round(prop_sus,2),
+                             .sep=""),
+              highlight = highlightOptions(color="black",
+                                           fillOpacity = 1,
+                                           bringToFront = FALSE))
 ```
+
+I wanted to look at where the Starbucks locations were on top of the map with neighborhood stops, to see if there were more or fewer Starbucks in places with more suspicious stops. I could not get my map to work for this, but I did get it to plot where the Starbucks locations are in Minnesota. 
   
 ## GitHub link
 
